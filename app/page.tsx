@@ -35,16 +35,16 @@ export default function Home() {
 
         <div className="space-x-4">
           <a 
-            href="/dashboard" 
+            href="/signup" 
             className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
           >
-            User Dashboard
+            Get Started
           </a>
           <a 
-            href="/employer" 
-            className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition"
+            href="/login" 
+            className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition border-2 border-blue-600"
           >
-            Employer Portal
+            Log In
           </a>
         </div>
       </div>
