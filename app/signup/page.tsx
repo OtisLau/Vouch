@@ -1,218 +1,185 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import type React from "react"
+import { useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Mail, Lock, User } from "lucide-react"
 
-export default function SignupPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
-  const [error, setError] = useState('');
+export default function RegisterPage() {
+    const [name, setName] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setError(null)
 
-    // Validation
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
+        if (password !== confirmPassword) {
+            setError("Passwords do not match")
+            return
+        }
+
+        try {
+            const response = await fetch('/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ name, email, password }),
+            })
+
+            const result = await response.json()
+
+            if (!response.ok) {
+                throw new Error(result.error || 'Failed to register')
+            }
+
+            // Redirect to dashboard or a "please verify your email" page
+            router.push('/dashboard')
+        } catch (error: any) {
+            setError(error.message)
+        }
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setLoading(false);
-      return;
-    }
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-accent/20 to-secondary/30 p-4">
+            <div className="w-full max-w-md">
+                {/* Stamp-style card with perforated edges */}
+                <div className="relative">
+                    {/* Perforated edges */}
+                    <div className="absolute -left-2 top-0 bottom-0 flex flex-col justify-around">
+                        {Array.from({ length: 14 }).map((_, i) => (
+                            <div key={`left-${i}`} className="h-4 w-4 rounded-full bg-background" />
+                        ))}
+                    </div>
+                    <div className="absolute -right-2 top-0 bottom-0 flex flex-col justify-around">
+                        {Array.from({ length: 14 }).map((_, i) => (
+                            <div key={`right-${i}`} className="h-4 w-4 rounded-full bg-background" />
+                        ))}
+                    </div>
+                    <div className="absolute -top-2 left-0 right-0 flex justify-around">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={`top-${i}`} className="h-4 w-4 rounded-full bg-background" />
+                        ))}
+                    </div>
+                    <div className="absolute -bottom-2 left-0 right-0 flex justify-around">
+                        {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={`bottom-${i}`} className="h-4 w-4 rounded-full bg-background" />
+                        ))}
+                    </div>
 
-    // Check if username is alphanumeric and lowercase
-    if (!/^[a-z0-9_-]+$/.test(formData.username)) {
-      setError('Username can only contain lowercase letters, numbers, hyphens, and underscores');
-      setLoading(false);
-      return;
-    }
+                    {/* Card content */}
+                    <div className="relative rounded-lg border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                        <div className="mb-6 text-center">
+                            <h1 className="font-mono text-3xl font-bold text-foreground">Create Account</h1>
+                            <p className="mt-2 font-sans text-muted-foreground">Start collecting your verified stamps</p>
+                        </div>
 
-    try {
-      // Check if username is already taken
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('username')
-        .eq('username', formData.username)
-        .single();
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name" className="font-mono flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    Name
+                                </Label>
+                                <Input
+                                    id="name"
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="Your name"
+                                    className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    required
+                                />
+                            </div>
 
-      if (existingUser) {
-        throw new Error('Username already taken');
-      }
+                            <div className="space-y-2">
+                                <Label htmlFor="email" className="font-mono flex items-center gap-2">
+                                    <Mail className="h-4 w-4" />
+                                    Email
+                                </Label>
+                                <Input
+                                    id="email"
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="you@example.com"
+                                    className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    required
+                                />
+                            </div>
 
-      // Create auth user with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      });
+                            <div className="space-y-2">
+                                <Label htmlFor="password" className="font-mono flex items-center gap-2">
+                                    <Lock className="h-4 w-4" />
+                                    Password
+                                </Label>
+                                <Input
+                                    id="password"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    required
+                                />
+                            </div>
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create account');
+                            <div className="space-y-2">
+                                <Label htmlFor="confirm-password" className="font-mono flex items-center gap-2">
+                                    <Lock className="h-4 w-4" />
+                                    Confirm Password
+                                </Label>
+                                <Input
+                                    id="confirm-password"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    placeholder="••••••••"
+                                    className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    required
+                                />
+                            </div>
 
-      // Generate wallet
-      const walletResponse = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          auth_id: authData.user.id,
-          name: formData.name,
-          username: formData.username,
-          email: formData.email,
-        }),
-      });
+                            {error && <p className="text-red-500 text-sm">{error}</p>}
 
-      const walletData = await walletResponse.json();
-      if (!walletResponse.ok) throw new Error(walletData.error);
+                            <Button
+                                type="submit"
+                                className="w-full border-2 border-border bg-primary font-mono text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                            >
+                                Create Account
+                            </Button>
+                        </form>
 
-      // Success! User is now logged in automatically
-      alert(`✅ Account created successfully! Your wallet: ${walletData.walletAddress}`);
-      
-      // Force page reload to dashboard
-      window.location.href = '/dashboard';
-    } catch (error: any) {
-      console.error('Signup error:', error);
-      setError(error.message || 'Failed to create account');
-    } finally {
-      setLoading(false);
-    }
-  }
+                        <div className="mt-6 text-center">
+                            <p className="text-sm text-muted-foreground font-sans">
+                                Already have an account?{" "}
+                                <Link
+                                    href="/login"
+                                    className="font-mono font-semibold text-primary underline decoration-2 underline-offset-2 hover:text-primary/80"
+                                >
+                                    Sign in
+                                </Link>
+                            </p>
+                        </div>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Create Your Vouch Account
-          </h1>
-          <p className="text-gray-600">
-            Sign up to start building your verified resume
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="John Doe"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Username
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="johndoe"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase() })}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Your public vouch link: vouch.app/vouch/{formData.username || 'username'}
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="john@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="••••••••"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-            />
-          </div>
-
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-red-800 text-sm">{error}</p>
+                        <div className="mt-4 text-center">
+                            <Link
+                                href="/"
+                                className="text-sm text-muted-foreground font-mono hover:text-foreground underline underline-offset-2"
+                            >
+                                Back to home
+                            </Link>
+                        </div>
+                    </div>
+                </div>
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-md font-semibold hover:bg-blue-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Creating Account...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Already have an account?{' '}
-            <a href="/login" className="text-blue-600 hover:underline font-semibold">
-              Log In
-            </a>
-          </p>
         </div>
-
-        <div className="mt-4 text-center">
-          <a href="/" className="text-gray-500 hover:underline text-sm">
-            ← Back to Home
-          </a>
-        </div>
-
-        <div className="mt-6 p-4 bg-blue-50 rounded-md">
-          <p className="text-sm text-blue-800">
-            🎉 A Solana wallet will be automatically created for you!
-          </p>
-        </div>
-      </div>
-    </div>
-  );
+    )
 }
-
