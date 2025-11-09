@@ -145,5 +145,5 @@ Visit `http://localhost:3000` in your browser.
 
 ## Collaborators
 
-{ GitHub Username 1 }
-{ Add more as appropriate }
+- [YanicB](https://github.com/YanicB)
+- [Mahd-Shakil](https://github.com/Mahd-Shakil)
