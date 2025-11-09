@@ -30,11 +30,11 @@ async function airdrop() {
 
         // Check balance
         const balance = await connection.getBalance(publicKey);
+        console.log(`\n✅ Airdrop successful!`);
+        console.log(`Balance: ${balance / LAMPORTS_PER_SOL} SOL`);
     } catch (error) {
         console.error('\nAirdrop failed:', error.message);
         process.exit(1);
     }
 }
 airdrop();
-
-

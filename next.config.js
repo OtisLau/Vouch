@@ -2,22 +2,42 @@
 const nextConfig = {
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Client-side: exclude pdf-parse and its dependencies
+      // Client-side: exclude Node.js-only packages and their dependencies
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
         path: false,
         crypto: false,
         canvas: false,
+        stream: false,
+        buffer: false,
+        util: false,
+        url: false,
+        zlib: false,
+        http: false,
+        https: false,
+        net: false,
+        tls: false,
+        child_process: false,
       };
       
-      // Exclude pdf-parse and related packages from client bundles
+      // Exclude Node.js-only packages from client bundles
       config.externals = config.externals || [];
-      config.externals.push('pdf-parse', 'canvas');
+      config.externals.push(
+        'pdf-parse',
+        'canvas',
+        '@solana/web3.js',
+        '@metaplex-foundation/js',
+        '@solana/spl-token'
+      );
     } else {
-      // Server-side: ensure canvas is aliased to false (not needed)
+      // Server-side: Fix for Solana web3.js WebSocket issues
       config.resolve.alias = config.resolve.alias || {};
       config.resolve.alias.canvas = false;
+      
+      // Externalize native WebSocket dependencies to prevent bundling issues
+      config.externals = config.externals || [];
+      config.externals.push('bufferutil', 'utf-8-validate');
     }
     
     return config;
@@ -25,4 +45,3 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
-

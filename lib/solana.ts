@@ -5,8 +5,8 @@ import {
   LAMPORTS_PER_SOL,
 } from '@solana/web3.js';
 import { Metaplex, keypairIdentity, mockStorage } from '@metaplex-foundation/js';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface CredentialMetadata {
   company: string;
@@ -16,11 +16,22 @@ export interface CredentialMetadata {
   verified_by: string;
 }
 
-// Initialize Solana connection to devnet
-export const connection = new Connection(
-  process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com',
-  'confirmed'
-);
+// Lazy-load Solana connection (only initialize when needed)
+let _connection: Connection | null = null;
+function getConnection(): Connection {
+  if (!_connection) {
+    _connection = new Connection(
+      process.env.NEXT_PUBLIC_SOLANA_RPC_URL || 'https://api.devnet.solana.com',
+      {
+        commitment: 'confirmed',
+        // Disable WebSocket to avoid bufferUtil issues in Next.js
+        disableRetryOnRateLimit: true,
+        wsEndpoint: undefined, // Force HTTP polling instead of WebSocket
+      }
+    );
+  }
+  return _connection;
+}
 
 // Load issuer keypair from file or environment variable for signing transactions
 function loadIssuerKeypair(): Keypair {
@@ -49,12 +60,18 @@ function loadIssuerKeypair(): Keypair {
   throw new Error('Issuer keypair not found! Please set ISSUER_PRIVATE_KEY in .env.local or create issuer-keypair.json');
 }
 
-// Initialize Metaplex SDK for NFT operations
-// Using mockStorage() for fast metadata handling (suitable for demos/hackathons)
-const issuerKeypair = loadIssuerKeypair();
-const metaplex = Metaplex.make(connection)
-  .use(keypairIdentity(issuerKeypair))
-  .use(mockStorage());
+// Lazy-load Metaplex SDK (only initialize when minting is called)
+let _metaplex: ReturnType<typeof Metaplex.make> | null = null;
+let _issuerKeypair: Keypair | null = null;
+function getMetaplex() {
+  if (!_metaplex) {
+    _issuerKeypair = loadIssuerKeypair();
+    _metaplex = Metaplex.make(getConnection())
+      .use(keypairIdentity(_issuerKeypair))
+      .use(mockStorage());
+  }
+  return _metaplex;
+}
 
 // Helper: Generate wallet for new user
 export function generateWallet(): { publicKey: string; privateKey: string } {
@@ -69,7 +86,7 @@ export function generateWallet(): { publicKey: string; privateKey: string } {
 export async function getWalletBalance(walletAddress: string): Promise<number> {
   try {
     const publicKey = new PublicKey(walletAddress);
-    const balance = await connection.getBalance(publicKey);
+    const balance = await getConnection().getBalance(publicKey);
     return balance / LAMPORTS_PER_SOL;
   } catch (error) {
     return 0;
@@ -100,6 +117,10 @@ export async function mintCredentialSimplified(
   metadata: CredentialMetadata
 ): Promise<StoredCredential> {
   try {
+    // Initialize metaplex and keypair only when minting (lazy loading)
+    const metaplex = getMetaplex();
+    const issuerKeypair = _issuerKeypair!;
+    
     console.log('[SOLANA] Starting NFT minting process...');
     console.log('[SOLANA] User Wallet Address:', userWalletAddress);
     console.log('[SOLANA] Issuer Public Key:', issuerKeypair.publicKey.toBase58());
@@ -178,4 +199,3 @@ export function isValidSolanaAddress(address: string): boolean {
     return false;
   }
 }
-

@@ -6,7 +6,7 @@ export default function Hero() {
         <section className="bg-secondary/30 px-4 py-32 pb-16 min-h-screen flex items-center justify-center">
             <div className="mx-auto max-w-4xl text-center">
                 <h1 className="mb-4 font-mono text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl">
-                    Blockchain Resume Verification
+                    Stamp Your Story
                 </h1>
                 <p className="mx-auto mb-8 max-w-2xl text-balance text-lg text-muted-foreground md:text-xl">
                     Get your work experience verified on the blockchain. Collect stamps for each approved credential.

@@ -80,7 +80,9 @@ export default function EmployerDashboard() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve credential')
+        const errorMsg = data.error || 'Failed to approve credential'
+        const hint = data.hint ? `\n\n${data.hint}` : ''
+        throw new Error(errorMsg + hint)
       }
 
       toast({

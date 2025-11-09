@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { mintCredentialSimplified } from '@/lib/solana';
 
+// Ensure this route uses Node.js runtime (required for fs and other Node.js APIs)
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -23,26 +27,48 @@ export async function POST(request: NextRequest) {
 
     // Check if the request exists and is pending
     console.log('[MINT API] Fetching credential request from database...');
+    console.log('[MINT API] Looking for request_id:', requestId);
     const { data: requestData, error: requestError } = await supabase
       .from('credential_requests')
       .select('*')
       .eq('request_id', requestId)
       .single();
 
-    if (requestError || !requestData) {
-      console.error('[MINT API] Credential request not found:', requestError);
+    if (requestError) {
+      console.error('[MINT API] Database error:', requestError);
+      console.error('[MINT API] Error code:', requestError.code);
+      console.error('[MINT API] Error message:', requestError.message);
       return NextResponse.json(
-        { error: 'Credential request not found' },
+        { 
+          error: 'Credential request not found in database',
+          details: requestError.message,
+          hint: 'The request may have been deleted. Please check the database or create a new request.'
+        },
+        { status: 404 }
+      );
+    }
+
+    if (!requestData) {
+      console.error('[MINT API] No request data returned for request_id:', requestId);
+      return NextResponse.json(
+        { 
+          error: 'Credential request not found',
+          hint: 'The request may have been deleted from the database. Please check the credential_requests table.'
+        },
         { status: 404 }
       );
     }
 
     console.log('[MINT API] Found credential request:', requestData);
+    console.log('[MINT API] Request status:', requestData.status);
 
     if (requestData.status !== 'pending') {
       console.error('[MINT API] Credential request is not pending, current status:', requestData.status);
       return NextResponse.json(
-        { error: 'Credential request is not pending' },
+        { 
+          error: `Credential request is not pending (current status: ${requestData.status})`,
+          hint: 'Only pending requests can be minted. This request may have already been approved or rejected.'
+        },
         { status: 400 }
       );
     }
@@ -86,4 +112,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
