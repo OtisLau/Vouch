@@ -81,7 +81,7 @@ export default function EmployerDashboard() {
         throw new Error(data.error || 'Failed to approve credential')
       }
 
-      alert('✅ Credential approved and minted to blockchain!')
+      alert('Credential approved and minted to blockchain!')
       fetchEmployerData()
     } catch (error: any) {
       alert('Error: ' + error.message)
@@ -105,7 +105,7 @@ export default function EmployerDashboard() {
         throw error
       }
 
-      alert('❌ Request rejected')
+      alert('Request rejected')
       fetchEmployerData()
     } catch (error: any) {
       alert('Error: ' + error.message)

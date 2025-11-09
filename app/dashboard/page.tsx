@@ -105,7 +105,7 @@ export default function Dashboard() {
       if (error) {
         alert('Error: ' + error.message)
       } else {
-        alert('✅ Verification request submitted successfully!')
+        alert('Verification request submitted successfully!')
         setFormData({
           company_name: '',
           role_title: '',
@@ -296,7 +296,7 @@ export default function Dashboard() {
 
         {/* Public Profile Link */}
         <div className="mb-8 rounded-lg border-2 border-border bg-card p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-          <p className="text-sm font-semibold text-foreground mb-2 font-mono">🔗 Your Public Profile:</p>
+          <p className="text-sm font-semibold text-foreground mb-2 font-mono">Your Public Profile:</p>
           <div className="flex gap-2">
             <input
               type="text"
@@ -308,7 +308,7 @@ export default function Dashboard() {
               onClick={() => {
                 if (typeof window !== 'undefined') {
                   navigator.clipboard.writeText(`${window.location.origin}/vouch/${user.username}`)
-                  alert('✅ Link copied to clipboard!')
+                  alert('Link copied to clipboard!')
                 }
               }}
               className="border-2 border-border font-mono shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"
@@ -365,7 +365,7 @@ export default function Dashboard() {
           {showExtracted && extractedExperiences.length > 0 && (
             <div className="mb-4 rounded-lg border-2 border-border bg-card p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <p className="text-sm font-semibold text-foreground mb-3 font-mono">
-                ✨ Found {extractedExperiences.length} work experience{extractedExperiences.length > 1 ? 's' : ''} in your resume:
+                Found {extractedExperiences.length} work experience{extractedExperiences.length > 1 ? 's' : ''} in your resume:
               </p>
               <div className="space-y-2">
                 {extractedExperiences.map((exp, index) => (
