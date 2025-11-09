@@ -9,25 +9,34 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Mail, Lock, User } from "lucide-react"
 
-export default function RegisterPage() {
+export default function SignupPage() {
     const [name, setName] = useState("")
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [error, setError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError(null)
+        setIsLoading(true)
 
         if (password !== confirmPassword) {
             setError("Passwords do not match")
+            setIsLoading(false)
+            return
+        }
+
+        if (password.length < 6) {
+            setError("Password must be at least 6 characters")
+            setIsLoading(false)
             return
         }
 
         try {
-            const response = await fetch('/api/register', {
+            const response = await fetch('/api/signup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -41,19 +50,18 @@ export default function RegisterPage() {
                 throw new Error(result.error || 'Failed to register')
             }
 
-            // Redirect to dashboard or a "please verify your email" page
             router.push('/dashboard')
         } catch (error: any) {
             setError(error.message)
+        } finally {
+            setIsLoading(false)
         }
     }
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-accent/20 to-secondary/30 p-4">
             <div className="w-full max-w-md">
-                {/* Stamp-style card with perforated edges */}
                 <div className="relative">
-                    {/* Perforated edges */}
                     <div className="absolute -left-2 top-0 bottom-0 flex flex-col justify-around">
                         {Array.from({ length: 14 }).map((_, i) => (
                             <div key={`left-${i}`} className="h-4 w-4 rounded-full bg-background" />
@@ -75,7 +83,6 @@ export default function RegisterPage() {
                         ))}
                     </div>
 
-                    {/* Card content */}
                     <div className="relative rounded-lg border-4 border-border bg-card p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
                         <div className="mb-6 text-center">
                             <h1 className="font-mono text-3xl font-bold text-foreground">Create Account</h1>
@@ -95,6 +102,7 @@ export default function RegisterPage() {
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder="Your name"
                                     className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    disabled={isLoading}
                                     required
                                 />
                             </div>
@@ -111,6 +119,7 @@ export default function RegisterPage() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="you@example.com"
                                     className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    disabled={isLoading}
                                     required
                                 />
                             </div>
@@ -127,7 +136,9 @@ export default function RegisterPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
                                     className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    disabled={isLoading}
                                     required
+                                    minLength={6}
                                 />
                             </div>
 
@@ -143,17 +154,24 @@ export default function RegisterPage() {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                     placeholder="••••••••"
                                     className="border-2 border-border bg-input font-sans shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]"
+                                    disabled={isLoading}
                                     required
+                                    minLength={6}
                                 />
                             </div>
 
-                            {error && <p className="text-red-500 text-sm">{error}</p>}
+                            {error && (
+                                <div className="rounded border-2 border-red-500 bg-red-50 p-3 text-sm text-red-600">
+                                    {error}
+                                </div>
+                            )}
 
                             <Button
                                 type="submit"
-                                className="w-full border-2 border-border bg-primary font-mono text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                disabled={isLoading}
+                                className="w-full border-2 border-border bg-primary font-mono text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Create Account
+                                {isLoading ? "Creating Account..." : "Create Account"}
                             </Button>
                         </form>
 
